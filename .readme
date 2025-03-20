@@ -4,3 +4,6 @@ and
 [3/18, 11:21 AM] Om Nagare: pip install Bio-Epidemiology-NER==0.0.6
 [3/18, 12:49 PM] Om Nagare: python -c "import nltk; nltk.download('punkt_tab')"
 [3/18, 12:49 PM] Om Nagare: pip install torch torchvision torchaudio
+
+
+master_df = pd.concat([master_df, final_df], ignore_index=True)
