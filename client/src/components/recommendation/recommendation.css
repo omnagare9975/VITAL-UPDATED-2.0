@@ -1,93 +1,156 @@
+/* Full page container */
 .recommendation {
     width: 100%;
-    height: 100%;
+    padding: 40px 20px;
+    background-color: #f9f9f9;
 }
 
+/* Recommendation grid container */
 .recommendation_container {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    width: 90%;
-}
-
-.recommendation_object img {
-    width: 100px;
-    border-radius: 10px;
-}
-
-.recommendation_object {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    height: 200px;
-    border-radius: 10px;
-    border: solid black 1px;
-}
-
-.recommendation_outer {
-    margin-top: 80px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+    justify-items: center;
     width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Each recommendation card */
+.recommendation_inner {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 16px;
+    width: 100%;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+    position: relative;
+}
+
+.recommendation_inner:hover {
+    transform: scale(1.015);
+}
+
+/* PDF preview styling */
+.recommendation_object {
+    width: 100%;
+    height: 220px; /* FIXED HEIGHT */
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background-color: #f2f2f2;
+    position: relative;
+}
+
+.recommendation_object canvas {
+    max-height: 100%;
+    width: auto !important;
+    height: auto !important;
+    max-width: 100% !important;
+    object-fit: contain;
+    display: block;
+
+}
+/* Title and maker info */
+.recommendation_object_bottom {
+    margin-top: 16px;
+    text-align: left;
 }
 
 .recommendation_object_bottom h3 {
-    margin: 2rem 0 0 0;
-}
-
-.to_mainpage {
-    display: flex;
-    position: absolute;
-    top: 7rem;
-    left: 4rem;
-    gap: 3px;
-    text-decoration: underline;
-    cursor: pointer;
-}
-
-.to_mainpage:hover {
-    text-decoration: none;
+    font-size: 18px;
+    font-weight: 600;
+    color: #222;
+    margin: 0 0 6px 0;
 }
 
 .maker {
-    color: gray;
-    flex: 1;
+    font-size: 14px;
+    color: #888;
+    margin: 0;
 }
 
+/* Hover Description */
 .recommendation_object_bottom_bottom {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    margin-top: 10px;
+    position: relative;
 }
 
-.recommendation_object_bottom_bottom div {
-    font-size: small;
-    border: solid black 1px;
-    padding: 2px;
-    border-radius: 3px;
+.hover_over {
+    display: inline-block;
+    background-color: #e6e6e6;
+    border: 1px solid #ccc;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 13px;
     cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
 }
 
+.hover_over:hover {
+    background-color: #ddd;
+}
+
+/* Hidden div shown on hover */
 .hidden_div {
     display: none;
     position: absolute;
-    background-color: white;
-    width: 50%;
-    padding: 1rem;
-    max-width: 390px;
-    /* Set a maximum width */
-    box-shadow: 10px 10px 10px 10px rgba(0, 0, 0, 0.1), 0 0 0 0 rgba(0, 0, 0, 0.05), 0 0 7px 3px rgba(0, 0, 0, 0.03);
-    cursor: pointer;
+    top: 40px;
+    left: 0;
+    width: 100%;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 10px;
+    z-index: 5;
+    font-size: 13px;
+    color: #333;
+    border-radius: 6px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    line-height: 1.5;
+    white-space: pre-wrap;
+    max-height: 150px;
+    overflow-y: auto;
 }
 
-.recommendation_object_bottom_bottom:hover .hidden_div {
+.hover_over:hover + .hidden_div {
     display: block;
 }
 
-.recommendation_buttons {
-    padding: 0 0 0 2rem;
-    width: 180px;
+/* Top section (Navbar + back) */
+.to_mainpage {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #333;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    padding-left: 20px;
+    margin-bottom: 20px;
+}
+
+/* Loading states */
+.loading_title {
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.loading_subtext {
+    font-size: 14px;
+    text-align: center;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+/* Page wrapper */
+.recommendation_outer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
