@@ -25,7 +25,7 @@
     margin: 0 auto;
 }
 
-/* Each recommendation card */
+/* Each recommendation card + description wrapper */
 .recommendation_inner {
     background-color: #ffffff;
     border-radius: 12px;
@@ -83,51 +83,19 @@
     margin: 0;
 }
 
-/* Hover Description */
-.recommendation_object_bottom_bottom {
+/* Description shown outside the card */
+.recommendation_description {
     margin-top: 10px;
-    position: relative;
-}
-
-.hover_over {
-    display: inline-block;
-    background-color: #e6e6e6;
-    border: 1px solid #ccc;
-    padding: 5px 10px;
-    border-radius: 6px;
-    font-size: 13px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.2s ease;
-}
-
-.hover_over:hover {
-    background-color: #ddd;
-}
-
-/* Hidden div shown on hover */
-.hidden_div {
-    display: none;
-    position: absolute;
-    top: 40px;
-    left: 0;
-    width: 100%;
-    background-color: #fff;
-    border: 1px solid #ccc;
-    padding: 10px;
-    z-index: 5;
     font-size: 13px;
     color: #333;
-    border-radius: 6px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
     line-height: 1.5;
-    white-space: pre-wrap;
-    max-height: 150px;
+    background-color: #fff;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    padding: 10px;
+    max-height: 160px;
     overflow-y: auto;
-}
-
-.hover_over:hover + .hidden_div {
-    display: block;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 /* Top section (Navbar + back) */

@@ -99,11 +99,12 @@ const Recommendation = () => {
 
                   <div className="recommendation_object_bottom">
                     <h3>{d[2]}</h3>
-                    <div className="recommendation_object_bottom_bottom">
-                      <p className="maker">By {d[3]}</p>
-                      <div className="hover_over">Hover over me!</div>
-                      <div className="hidden_div">{d[13]}</div>
-                    </div>
+                    <p className="maker">By {d[3]}</p>
+                  </div>
+
+                  {/* Description outside the card for better readability */}
+                  <div className="recommendation_description">
+                    {d[13]}
                   </div>
                 </div>
               ))}
