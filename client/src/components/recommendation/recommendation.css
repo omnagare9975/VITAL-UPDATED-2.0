@@ -1,8 +1,16 @@
 /* Full page container */
 .recommendation {
     width: 100%;
+    min-height: 100vh;
     padding: 40px 20px;
     background-color: #f9f9f9;
+}
+
+/* Page wrapper */
+.recommendation_outer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 /* Recommendation grid container */
@@ -11,6 +19,7 @@
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 24px;
     justify-items: center;
+    justify-content: center;
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
@@ -34,7 +43,7 @@
 /* PDF preview styling */
 .recommendation_object {
     width: 100%;
-    height: 220px; /* FIXED HEIGHT */
+    height: 220px; /* fixed thumbnail height */
     overflow: hidden;
     display: flex;
     justify-content: center;
@@ -45,15 +54,16 @@
     position: relative;
 }
 
+/* react-pdf renders a <canvas> */
 .recommendation_object canvas {
     max-height: 100%;
+    max-width: 100% !important;
     width: auto !important;
     height: auto !important;
-    max-width: 100% !important;
     object-fit: contain;
     display: block;
-
 }
+
 /* Title and maker info */
 .recommendation_object_bottom {
     margin-top: 16px;
@@ -146,11 +156,4 @@
     text-align: center;
     color: #666;
     margin-bottom: 20px;
-}
-
-/* Page wrapper */
-.recommendation_outer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
 }

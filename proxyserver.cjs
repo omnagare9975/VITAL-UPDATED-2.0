@@ -1,9 +1,12 @@
+// pdf-proxy.js
 const express = require('express');
-const fetch = require('node-fetch'); // Now this works!
+const fetch = require('node-fetch');
+const cors = require('cors');
+
 const app = express();
 const PORT = 3003;
-const cors = require('cors')
-app.use(cors()); // ✅ This enables CORS for all routes
+
+app.use(cors()); // allow http://localhost:3000 etc.
 
 app.get('/proxy/pdf/:id', async (req, res) => {
   const { id } = req.params;
@@ -11,16 +14,24 @@ app.get('/proxy/pdf/:id', async (req, res) => {
 
   try {
     const response = await fetch(remoteUrl);
-    if (!response.ok) throw new Error('PDF not found');
 
-    res.setHeader('Content-Type', response.headers.get('content-type'));
+    if (!response.ok) {
+      console.error('PDF not found:', remoteUrl, response.status);
+      return res.status(404).send('PDF not found');
+    }
+
+    res.setHeader(
+      'Content-Type',
+      response.headers.get('content-type') || 'application/pdf'
+    );
+
     response.body.pipe(res);
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching PDF:', error);
     res.status(500).send('Error fetching PDF');
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Proxy server running at http://localhost:${PORT}`);
+  console.log(`🚀 PDF proxy running at http://localhost:${PORT}`);
 });

@@ -16,8 +16,8 @@ doc = f"""
 analysed = ner_prediction(corpus=doc, compute='cpu')
 
 if analysed.shape == (0, 0):
-    print("Cannot analyse your status: Please be more specific!")
-    sys.exit("args: {}".format(analysed.shape))
+    print("Cannot analyse your status: Please be more specific!", file=sys.stderr)
+    sys.exit(1)
 
 # Filtering data based on entity groups
 analysed_filtered_DPBS = analysed[
@@ -38,13 +38,9 @@ othing_1 = pd.read_csv("OtherIngredients_1.csv", engine="python")
 othing_2 = pd.read_csv("OtherIngredients_2.csv", engine="python")
 
 # Merge data
-sup_frame = [sup_1, sup_2]
-prover_frame = [prover_1, prover_2]
-othing_frame = [othing_1, othing_2]
-
-sup_merged = pd.concat(sup_frame, ignore_index=True, sort=False)
-prover_merged = pd.concat(prover_frame, ignore_index=True, sort=False)
-othing_merged = pd.concat(othing_frame, ignore_index=True, sort=False)
+sup_merged = pd.concat([sup_1, sup_2], ignore_index=True, sort=False)
+prover_merged = pd.concat([prover_1, prover_2], ignore_index=True, sort=False)
+othing_merged = pd.concat([othing_1, othing_2], ignore_index=True, sort=False)
 
 # Filter statements
 sup_merged = sup_merged[sup_merged["Statement Type"] == "Other"]
@@ -54,16 +50,16 @@ full_merged = pd.merge(full_merged, othing_merged, how="right", on=["URL", "DSLD
 # Initialize DataFrame
 analysed_df = pd.DataFrame()
 
-# Filter by Diagnostic Procedure
+# Filter by Diagnostic Procedure and Biological Structure
 for _, row in analysed_filtered_DPBS.iterrows():
     analysed_df = pd.concat([
         analysed_df,
-        full_merged[full_merged["Statement"].str.contains(row['value'], na=False)]
+        full_merged[full_merged["Statement"].str.contains(row['value'], na=False, case=False)]
     ])
 
 if analysed_df.shape == (0, 0):
-    print("No supplements available that satisfy your requirements")
-    sys.exit("Bailing out of the program.")
+    print("No supplements available that satisfy your requirements", file=sys.stderr)
+    sys.exit(1)
 
 # Age-based filtering
 if not sys.argv[1]:  # Assuming no age input
@@ -74,7 +70,7 @@ if not sys.argv[1]:  # Assuming no age input
     for _, row in child_rec.iterrows():
         new_df = pd.concat([
             new_df,
-            analysed_df[analysed_df["Supplement Form [LanguaL]"].str.contains(row['Supplement Form [LanguaL]'], case=False)]
+            analysed_df[analysed_df["Supplement Form [LanguaL]"].str.contains(row['Supplement Form [LanguaL]'], case=False, na=False)]
         ])
 
     analysed_df = pd.concat([new_df, analysed_df_copy.loc[~analysed_df_copy.index.isin(new_df.index)]], axis=0)
@@ -90,10 +86,10 @@ if sys.argv[2] != 'Nan':
     for _, row in brand_rec.iterrows():
         new_df = pd.concat([
             new_df,
-            analysed_df[analysed_df["Brand Name"].str.contains(row['Brand Name'], case=False)]
+            analysed_df[analysed_df["Brand Name"].str.contains(row['Brand Name'], case=False, na=False)]
         ])
 
-    if 5 <= 6:  # Assuming a condition that evaluates to True
+    if 5 <= 6:  # Always True, e.g. age_flag condition
         age_flag = True
         child_rec = pd.DataFrame({'Supplement Form [LanguaL]': ['Liquid', 'Powder', 'Gummy or Jelly']})
         new_df_2 = pd.DataFrame()
@@ -101,7 +97,7 @@ if sys.argv[2] != 'Nan':
         for _, row in child_rec.iterrows():
             new_df_2 = pd.concat([
                 new_df_2,
-                new_df[new_df["Supplement Form [LanguaL]"].str.contains(row['Supplement Form [LanguaL]'], case=False)]
+                new_df[new_df["Supplement Form [LanguaL]"].str.contains(row['Supplement Form [LanguaL]'], case=False, na=False)]
             ])
 
 if age_flag:
@@ -117,10 +113,10 @@ if sys.argv[3]:
     for _, row in on_rec.iterrows():
         new_df = pd.concat([
             new_df,
-            analysed_df[analysed_df["Market Status"].str.contains(row['Market Status'], case=False)]
+            analysed_df[analysed_df["Market Status"].str.contains(row['Market Status'], case=False, na=False)]
         ])
-    
-    analysed_df = new_df  
+
+    analysed_df = new_df
 
 # Process allergies
 inp = sys.argv[5].replace(" ", "").split(",")
@@ -150,9 +146,9 @@ allergic_food_dict = {
 
 allergy_list = []
 if inp:
-    for values in ["milk", "egg", "fish"]:
+    for user_val in inp:
         for key, val in allergic_food_dict.items():
-            if values in val:
+            if user_val.lower() in [v.lower() for v in val]:
                 allergy_list.append(key)
 
 final_tab_copy = analysed_df.copy()
@@ -175,7 +171,21 @@ for _, row in analysed_df.iterrows():
 
 analysed_df = final_tab_copy
 
-# Convert DataFrame to JSON
-result = analysed_df.to_json(orient="split")
-parsed = json.loads(result)
-print(json.dumps(parsed, indent=4))
+# Limit result rows and columns before JSON serialization
+MAX_ROWS = 500
+MAX_COLS = 30
+
+if len(analysed_df) > MAX_ROWS:
+    analysed_df = analysed_df.head(MAX_ROWS)
+
+if analysed_df.shape[1] > MAX_COLS:
+    analysed_df = analysed_df.iloc[:, :MAX_COLS]
+
+# Convert DataFrame to JSON and print
+try:
+    result = analysed_df.to_json(orient="split")
+    parsed = json.loads(result)
+    print(json.dumps(parsed, indent=4))
+except Exception as e:
+    print(f"Failed to serialize results: {e}", file=sys.stderr)
+    sys.exit(1)
