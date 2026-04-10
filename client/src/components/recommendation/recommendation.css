@@ -125,3 +125,98 @@
     color: #666;
     margin-bottom: 20px;
 }
+
+
+/* ── Add these to your existing recommendation.css ── */
+
+/* Grok fallback / no-match card */
+.recommendation_fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 2rem;
+  max-width: 520px;
+  margin: 4rem auto;
+  background: #f9f9f9;
+  border-radius: 16px;
+  border: 1px solid #e0e0e0;
+}
+
+.fallback_icon {
+  font-size: 2.5rem;
+  color: #888;
+  margin-bottom: 1rem;
+}
+
+.recommendation_fallback h2 {
+  font-size: 1.4rem;
+  margin-bottom: 0.75rem;
+  color: #333;
+}
+
+.fallback_message {
+  font-size: 1rem;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.fallback_query {
+  font-size: 0.9rem;
+  color: #888;
+  margin-bottom: 1.5rem;
+}
+
+.fallback_query em {
+  color: #444;
+  font-style: italic;
+}
+
+.fallback_back_btn {
+  background: #333;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.4rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.fallback_back_btn:hover {
+  background: #555;
+}
+
+/* Normalized query info banner */
+.normalized_query_info {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.normalized_query_info em {
+  color: #333;
+  font-style: italic;
+}
+
+/* Allergy tags row */
+.allergy_info {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.allergy_tag {
+  background: #ffe5e5;
+  color: #c0392b;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
