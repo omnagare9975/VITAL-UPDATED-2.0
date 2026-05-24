@@ -1,0 +1,15 @@
+# ── VITAL PDF Proxy ───────────────────────────────────────────────────────────
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+# node-fetch v2 is CommonJS compatible
+RUN npm ci --only=production
+
+COPY proxyserver.cjs .
+
+EXPOSE 3003
+
+CMD ["node", "proxyserver.cjs"]

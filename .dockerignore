@@ -1,0 +1,12 @@
+node_modules
+client/node_modules
+server/node_modules
+client/build
+.git
+*.md
+.env
+
+# Don't copy large DSLD CSVs into the proxy image
+server/LabelStatements_*.csv
+server/ProductOverview_*.csv
+server/OtherIngredients_*.csv

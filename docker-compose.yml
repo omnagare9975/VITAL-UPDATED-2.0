@@ -1,0 +1,82 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  VITAL — Backend only (API + MongoDB)
+#  Frontend is deployed separately on AWS S3.
+#
+#  Usage:
+#    1. cp .env.docker .env   then fill in JWT_SECRET and GROQ_API_KEY
+#    2. docker compose up -d --build
+#    3. API available at http://localhost:3001
+#       PDF proxy at   http://localhost:3003
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── MongoDB ──────────────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7.0
+    container_name: vital_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-vitalpass}
+      MONGO_INITDB_DATABASE: vital
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - vital_network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── Express API + Python ──────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: vital_api
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      MONGODBURL: mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-vitalpass}@mongodb:27017/vital?authSource=admin
+      JWT_SECRET: ${JWT_SECRET}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      # Set this to your S3 website URL so CORS allows the frontend
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:3000}
+      NODE_ENV: production
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - vital_network
+
+  # ── PDF Proxy (NIH label PDFs for USA supplements) ────────────────────────────
+  proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.proxy
+    container_name: vital_proxy
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    environment:
+      PORT: 3003
+    networks:
+      - vital_network
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  vital_network:
+    driver: bridge
