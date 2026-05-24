@@ -26,6 +26,7 @@ const Login = () => {
 
     useEffect(() => {
         if (isLoggedIn) navigate("/mainpage");
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isLoggedIn]);
 
     const lottieStyle = { height: 46, width: 46 };

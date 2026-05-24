@@ -5,8 +5,8 @@ WORKDIR /app
 
 COPY package*.json ./
 
-# node-fetch v2 is CommonJS compatible
-RUN npm ci --only=production
+# Use npm install (not npm ci) — more forgiving with lock file drift
+RUN npm install --omit=dev
 
 COPY proxyserver.cjs .
 

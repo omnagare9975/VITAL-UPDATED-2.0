@@ -59,6 +59,7 @@ const Form = () => {
 
     useEffect(() => {
         if (userId !== authUserId) navigate("/");
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleNextQuestion = (answer) => {

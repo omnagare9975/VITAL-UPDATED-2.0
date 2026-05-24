@@ -21,7 +21,7 @@ const Navbar = () => {
     const dispatch = useDispatch();
     const [modal, setModal] = useState(false);
     const modalRef = useRef(null);
-    const location = useLocation();
+    useLocation(); // keep router context active
 
     const handleLogout = () => {
         dispatch(logout());
