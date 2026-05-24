@@ -99,42 +99,54 @@ In 2-3 sentences, mention what supplement types are generally associated with th
 }
 
 // ── GET /run-python/:age/:description  (USA – NIH DSLD) ──────────────────────
+//  Cascade:  check.py (NER)  →  check_simple.py (keyword)  →  Groq advisory
 app.get("/run-python/:age/:description", async (req, res) => {
   let { age, description } = req.params;
   description = decodeURIComponent(description);
   age = age.charAt(0).toUpperCase() + age.slice(1);
 
-  console.log(`[USA] Searching dataset: "${description}"`);
-
+  // ── Step 1: Full NER pipeline ─────────────────────────────────────────────
+  console.log(`[USA] Step 1 – NER search: "${description}"`);
   try {
     const stdout = await runPython(["check.py", age, "Vega", "False", description, "none"]);
     const result = parsePythonResult(stdout);
-
     if (result) {
-      console.log(`[USA] ✅ Dataset hit`);
-      result._meta = { originalQuery: description, country: "USA" };
+      console.log(`[USA] ✅ NER hit`);
+      result._meta = { originalQuery: description, country: "USA", engine: "NER" };
       return res.json(result);
     }
-
-    // Dataset found nothing — use Groq advisory as fallback
-    console.log(`[USA] ⚠ No dataset results, using Groq advisory fallback`);
-    throw new Error("empty_result");
-
   } catch (err) {
-    const errMsg = (err.stderr || err.error?.message || err.message || "").toString();
-    console.error(`[USA] Error:\n${errMsg.slice(0, 800)}`);
+    const msg = (err.stderr || err.error?.message || "").toString();
+    console.warn(`[USA] NER failed (${msg.slice(0, 120)})\n→ trying keyword fallback`);
+  }
 
-    try {
-      const msg = await generateFallbackResponse(description, "USA");
-      return res.status(404).json({ error: "no_match", message: msg, originalQuery: description, country: "USA" });
-    } catch {
-      return res.status(404).json({
-        error: "no_match",
-        message: "No supplements found. Please try different keywords or consult a healthcare provider.",
-        originalQuery: description,
-        country: "USA",
-      });
+  // ── Step 2: Lightweight keyword search (no NER/torch needed) ─────────────
+  console.log(`[USA] Step 2 – keyword search: "${description}"`);
+  try {
+    const stdout = await runPython(["check_simple.py", age, "Vega", "False", description, "none"]);
+    const result = parsePythonResult(stdout);
+    if (result) {
+      console.log(`[USA] ✅ Keyword hit`);
+      result._meta = { originalQuery: description, country: "USA", engine: "keyword" };
+      return res.json(result);
     }
+  } catch (err) {
+    const msg = (err.stderr || err.error?.message || "").toString();
+    console.warn(`[USA] Keyword search failed (${msg.slice(0, 120)})\n→ using Groq advisory`);
+  }
+
+  // ── Step 3: Groq advisory (last resort) ──────────────────────────────────
+  console.log(`[USA] Step 3 – Groq advisory`);
+  try {
+    const msg = await generateFallbackResponse(description, "USA");
+    return res.status(404).json({ error: "no_match", message: msg, originalQuery: description, country: "USA" });
+  } catch {
+    return res.status(404).json({
+      error: "no_match",
+      message: "No supplements found. Please try different keywords or consult a healthcare provider.",
+      originalQuery: description,
+      country: "USA",
+    });
   }
 });
 
