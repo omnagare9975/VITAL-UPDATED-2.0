@@ -3,19 +3,18 @@ import json
 import os
 import re
 
-# ── Silence ALL stdout pollution before importing heavy libraries ─────────────
-# NLTK, transformers, and torch all print messages to stdout (not stderr).
-# Node.js captures stdout and tries JSON.parse() on it — any prefix text breaks that.
-# We redirect stdout → stderr during imports, then restore it for the final JSON.
+# ── Redirect stdout → stderr for the ENTIRE script ───────────────────────────
+# NLTK downloads, transformers device messages, and pandas warnings all print
+# to stdout at various points (imports, first ner_prediction call, etc.).
+# Node.js JSON.parse() breaks if stdout has any non-JSON prefix.
+# Solution: keep stdout → stderr throughout; restore ONLY for the final JSON print.
 _real_stdout = sys.stdout
 sys.stdout = sys.stderr
 
 import numpy as np
 import pandas as pd
 from Bio_Epidemiology_NER.bio_recognizer import ner_prediction
-
-# Restore real stdout — only JSON will be written here
-sys.stdout = _real_stdout
+# NOTE: do NOT restore sys.stdout here — ner_prediction() also prints to stdout
 
 # ── CRITICAL: Always run from the script's own directory ──────────────────────
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -268,6 +267,8 @@ analysed_df = analysed_df.where(pd.notnull(analysed_df), None)
 try:
     result = analysed_df.to_json(orient="split")
     parsed = json.loads(result)
+    # Restore real stdout ONLY here — everything before this goes to stderr
+    sys.stdout = _real_stdout
     print(json.dumps(parsed, indent=2))
 except Exception as e:
     print(f"Failed to serialize results: {e}", file=sys.stderr)

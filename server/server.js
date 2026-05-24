@@ -122,7 +122,7 @@ app.get("/run-python/:age/:description", async (req, res) => {
 
   } catch (err) {
     const errMsg = (err.stderr || err.error?.message || err.message || "").toString();
-    console.error(`[USA] Error: ${errMsg.slice(0, 150)}`);
+    console.error(`[USA] Error:\n${errMsg.slice(0, 800)}`);
 
     try {
       const msg = await generateFallbackResponse(description, "USA");
@@ -165,7 +165,7 @@ app.get("/run-india/:age/:description", async (req, res) => {
 
   } catch (err) {
     const errMsg = (err.stderr || err.error?.message || err.message || "").toString();
-    console.error(`[India] Error: ${errMsg.slice(0, 150)}`);
+    console.error(`[India] Error:\n${errMsg.slice(0, 800)}`);
 
     try {
       const msg = await generateFallbackResponse(description, "India");
