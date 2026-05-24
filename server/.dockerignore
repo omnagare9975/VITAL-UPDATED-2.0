@@ -3,8 +3,3 @@ npm-debug.log
 .env
 .env.*
 *.md
-
-# DSLD CSVs are large — mount via volume instead
-LabelStatements_*.csv
-ProductOverview_*.csv
-OtherIngredients_*.csv

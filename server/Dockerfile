@@ -3,7 +3,7 @@ FROM node:20-bullseye-slim
 
 WORKDIR /app
 
-# ── System deps: Python 3 + pip ───────────────────────────────────────────────
+# ── System deps ───────────────────────────────────────────────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
@@ -12,26 +12,38 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN ln -sf /usr/bin/python3 /usr/bin/python
 
-# ── Python packages required by check.py (USA / NIH DSLD mode) ───────────────
-# CPU-only torch keeps the image smaller (~500 MB vs ~2 GB for GPU build)
-RUN pip3 install --no-cache-dir \
-    numpy \
-    pandas \
-    Bio-Epidemiology-NER==0.0.6
+# ── Python packages ───────────────────────────────────────────────────────────
+RUN pip3 install --no-cache-dir numpy pandas
+
+RUN pip3 install --no-cache-dir Bio-Epidemiology-NER==0.0.6
 
 RUN pip3 install --no-cache-dir \
     torch --index-url https://download.pytorch.org/whl/cpu
 
-# Pre-download NLTK punkt data so the first request doesn't need internet
-RUN python3 -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')"
+# ── NLTK data — download to /root/nltk_data so it is always found at runtime ─
+ENV NLTK_DATA=/root/nltk_data
+RUN python3 -c "\
+import nltk; \
+nltk.download('punkt',     download_dir='/root/nltk_data'); \
+nltk.download('punkt_tab', download_dir='/root/nltk_data'); \
+nltk.download('averaged_perceptron_tagger', download_dir='/root/nltk_data'); \
+nltk.download('averaged_perceptron_tagger_eng', download_dir='/root/nltk_data'); \
+print('NLTK downloads complete')"
+
+# ── Pre-load the NER model so HuggingFace weights are cached in the image ─────
+# This avoids a slow first-request model download at runtime.
+RUN python3 -c "\
+import sys; sys.stdout = sys.stderr; \
+from Bio_Epidemiology_NER.bio_recognizer import ner_prediction; \
+ner_prediction('CASE: fatigue', compute='cpu'); \
+print('NER model warm-up complete')" || echo "NER warm-up skipped (non-fatal)"
 
 # ── Node packages ─────────────────────────────────────────────────────────────
 COPY package*.json ./
 RUN npm install --omit=dev
 
-# ── App source ────────────────────────────────────────────────────────────────
+# ── App source (includes CSV files — .dockerignore no longer excludes them) ───
 COPY . .
 
 EXPOSE 3001
-
 CMD ["node", "server.js"]
