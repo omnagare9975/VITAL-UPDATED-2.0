@@ -176,9 +176,14 @@ app.get("/run-python/:age/:description", async (req, res) => {
       result._meta = { originalQuery: description, normalizedQuery: description, allergiesDetected: [], country: "USA" };
       return res.json(result);
     }
-    console.log(`[USA] Raw search returned empty, trying Groq normalization…`);
+    console.log(`[USA] Raw search empty – description didn't match CSV data. Trying Groq normalization…`);
   } catch (rawErr) {
-    console.warn(`[USA] Raw search failed: ${rawErr.stderr || rawErr.error?.message}`);
+    const errMsg = rawErr.stderr || rawErr.error?.message || "";
+    if (errMsg.includes("CSV file not found") || errMsg.includes("No module named")) {
+      console.warn(`[USA] ⚠ NIH CSV files missing or Python deps not installed. USA mode needs DSLD CSVs in server/. Falling back to Groq advisory.`);
+    } else {
+      console.warn(`[USA] Raw search failed: ${errMsg}`);
+    }
   }
 
   // ── Step 2: Normalize with Groq, then retry dataset ──────────────────────
@@ -255,13 +260,13 @@ app.get("/run-india/:age/:description", async (req, res) => {
     );
     const result = parsePythonResult(stdout);
     if (result) {
-      console.log(`[India] Raw search hit – returning ${result.data.length} results`);
+      console.log(`[India] ✅ Dataset hit – returning ${result.data.length} results (no AI used)`);
       result._meta = { originalQuery: description, normalizedQuery: description, allergiesDetected: [], country: "India" };
       return res.json(result);
     }
-    console.log(`[India] Raw search returned empty, trying Groq normalization…`);
+    console.log(`[India] Dataset returned empty. Trying Groq normalization as fallback…`);
   } catch (rawErr) {
-    console.warn(`[India] Raw search failed: ${rawErr.stderr || rawErr.error?.message}`);
+    console.warn(`[India] Dataset search failed: ${rawErr.stderr || rawErr.error?.message}`);
   }
 
   // ── Step 2: Normalize with Groq, then retry India dataset ────────────────
