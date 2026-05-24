@@ -1,16 +1,21 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import { SHA256, enc } from "crypto-js";
-import "./Login.css"
-import { loginUserAPIMethod, createUserAPIMethod } from "../../api/auth";
+import "./Login.css";
+import { loginUserAPIMethod } from "../../api/auth";
 import { login } from "../../features/userSlice";
 import Lottie from "lottie-react";
 import landingData1 from "../../assets/Lottie/ProcessIndicator.json";
 import Navbar from '../navbar/Navbar';
+import logo2 from "../../assets/images/logo2.png";
 
+const benefits = [
+    { icon: '🧬', text: 'AI-powered health profiling' },
+    { icon: '🌿', text: 'Personalized supplement matches' },
+    { icon: '🛡️', text: 'Allergen-safe filtering' },
+    { icon: '🇮🇳', text: 'Indian & US brands covered' },
+];
 
 const Login = () => {
     const navigate = useNavigate();
@@ -20,43 +25,27 @@ const Login = () => {
     const dispatch = useDispatch();
 
     useEffect(() => {
-        if (isLoggedIn) {
-            navigate("/mainpage");
-        }
+        if (isLoggedIn) navigate("/mainpage");
     }, [isLoggedIn]);
 
-    const style = {
-        height: 50,
-        width: 50,
-    };
+    const lottieStyle = { height: 46, width: 46 };
 
     const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
         email: '',
         password: ''
     });
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value
-        });
+        setFormData(prev => ({ ...prev, [name]: value }));
+        if (errorMessage) setErrorMessage(null);
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
         setLoginIsLoading(true);
 
-        // let hashedpassword = SHA256(formData.password).toString(enc.Hex);
-
-        const user = {
-            email: formData.email,
-            password: formData.password
-        };
-
-        loginUserAPIMethod(user)
+        loginUserAPIMethod({ email: formData.email, password: formData.password })
             .then((res) => {
                 if (res.ok) {
                     res.json().then((jsonResult) => {
@@ -65,84 +54,120 @@ const Login = () => {
                     });
                 } else {
                     setIsLoggedIn(false);
-                    setErrorMessage("Incorrect username or password");
+                    setErrorMessage("Incorrect email or password. Please try again.");
                 }
             })
-            .catch((err) => {
-                console.error("Error during login:", err);
+            .catch(() => {
                 setIsLoggedIn(false);
-                setErrorMessage("Something went wrong during login");
+                setErrorMessage("Something went wrong. Please try again.");
             })
-            .finally(() => {
-                setLoginIsLoading(false);
-            });
+            .finally(() => setLoginIsLoading(false));
     };
 
-    const register = () => {
-        navigate("/register");
-    }
-
     return (
-        <div className="login-form-container">
+        <div className="login_page">
             <Navbar />
-            <h1>Welcome back!</h1>
-            <p>Hope you're feeling better today.</p>
-            <div className="login-form-sub-container">
-                <form className="login-form" onSubmit={handleSubmit}>
-                    <div className="login_email">
-                        <label htmlFor="email">Email:</label>
-                        <TextField
-                            id="email"
-                            type="email"
-                            // variant="standard"
-                            onChange={handleChange}
-                            name="email"
-                            value={formData.email}
-                            required
-                            fullWidth
-                            autoComplete="off"
-                        />
+            <div className="login_layout">
+                {/* Left decorative panel */}
+                <div className="login_panel_left">
+                    <div className="login_panel_brand">
+                        <img src={logo2} className="login_panel_logo" alt="VITAL" />
+                        <div className="login_panel_brand_name">vital<span>.</span></div>
+                        <p className="login_panel_tagline">
+                            Your personalized health supplement advisor. Science-backed recommendations for your wellness journey.
+                        </p>
                     </div>
-
-                    <div className="login_password">
-                        <label htmlFor="password">Password:</label>
-                        <TextField
-                            id="password"
-                            type="password"
-                            // variant="standard"
-                            onChange={handleChange}
-                            name="password"
-                            value={formData.password}
-                            required
-                            fullWidth
-                            autoComplete="off"
-                        />
-                        {errorMessage && (
-                            <div className="pwd_err ui negative mini message">
-                                {errorMessage}
+                    <div className="login_panel_benefits">
+                        {benefits.map((b, i) => (
+                            <div className="login_panel_benefit" key={i}>
+                                <span className="login_panel_benefit_icon">{b.icon}</span>
+                                <span className="login_panel_benefit_text">{b.text}</span>
                             </div>
-                        )}
+                        ))}
                     </div>
+                </div>
 
-                    <div className="buttons">
-                        {loginLoading ? (
-                            <div
-                                style={{
-                                    display: "flex",
-                                    justifyContent: "space-around",
-                                }}
-                            >
-                                <Lottie animationData={landingData1} style={style} />
+                {/* Right form panel */}
+                <div className="login_panel_right">
+                    <div className="login_form_card">
+                        <div className="login_form_header">
+                            <h1>Welcome back</h1>
+                            <p>Sign in to continue your health journey.</p>
+                        </div>
+
+                        <form className="login_form" onSubmit={handleSubmit}>
+                            <div className="form_field">
+                                <label className="form_label" htmlFor="email">Email address</label>
+                                <TextField
+                                    id="email"
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    required
+                                    fullWidth
+                                    autoComplete="email"
+                                    size="small"
+                                    placeholder="you@example.com"
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '10px',
+                                            fontSize: '0.9375rem',
+                                        }
+                                    }}
+                                />
                             </div>
-                        ) : (
-                            <Button type="submit" variant="contained" style={{ backgroundColor: "#ff395c", height: "40px" }}>Sign In</Button>
-                        )}
-                        <div className="login_no_account" onClick={() => navigate('/register')}><p>Don't have an account?</p></div>
+
+                            <div className="form_field">
+                                <label className="form_label" htmlFor="password">Password</label>
+                                <TextField
+                                    id="password"
+                                    type="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
+                                    fullWidth
+                                    autoComplete="current-password"
+                                    size="small"
+                                    placeholder="••••••••"
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '10px',
+                                            fontSize: '0.9375rem',
+                                        }
+                                    }}
+                                />
+                            </div>
+
+                            {errorMessage && (
+                                <div className="pwd_err">{errorMessage}</div>
+                            )}
+
+                            <div className="login_form_actions">
+                                {loginLoading ? (
+                                    <div className="login_loading_wrap">
+                                        <Lottie animationData={landingData1} style={lottieStyle} />
+                                    </div>
+                                ) : (
+                                    <button type="submit" className="login_submit_btn">
+                                        Sign In
+                                    </button>
+                                )}
+
+                                <div className="login_divider">or</div>
+
+                                <p className="login_register_prompt">
+                                    Don't have an account?{' '}
+                                    <span onClick={() => navigate('/register')}>Create one free</span>
+                                </p>
+                            </div>
+                        </form>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default Login
+export default Login;

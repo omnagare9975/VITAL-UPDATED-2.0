@@ -1,16 +1,27 @@
-import { useState } from "react"
-import "./Register.css"
+import { useState } from "react";
+import "./Register.css";
 import { useNavigate } from "react-router-dom";
 import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import { SHA256, enc } from "crypto-js";
 import Lottie from "lottie-react";
 import { createUserAPIMethod, loginUserAPIMethod } from "../../api/auth";
 import { useDispatch } from "react-redux";
 import { login } from "../../features/userSlice";
 import landingData1 from "../../assets/Lottie/ProcessIndicator.json";
 import Navbar from '../navbar/Navbar';
+import logo2 from "../../assets/images/logo2.png";
 
+const steps = [
+    { num: '1', text: 'Create your free account' },
+    { num: '2', text: 'Complete your health assessment' },
+    { num: '3', text: 'Get personalized recommendations' },
+];
+
+const fieldStyle = {
+    '& .MuiOutlinedInput-root': {
+        borderRadius: '10px',
+        fontSize: '0.9375rem',
+    }
+};
 
 const Register = () => {
     const navigate = useNavigate();
@@ -27,36 +38,35 @@ const Register = () => {
         confirmPwd: ''
     });
 
-    const style = {
-        height: 50,
-        width: 50,
-    };
+    const lottieStyle = { height: 46, width: 46 };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value
-        });
+        setFormData(prev => ({ ...prev, [name]: value }));
+        if (errorMessage) setErrorMessage(null);
+        if (failed) setFailed(false);
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
         if (formData.password !== formData.confirmPwd) {
-            setErrorMessage("Passwords does not match.");
+            setErrorMessage("Passwords do not match.");
+            return;
+        }
+        if (formData.password.length < 6) {
+            setErrorMessage("Password must be at least 6 characters.");
             return;
         }
 
         setRegisterIsLoading(true);
 
-        // encrypt password
-        // let hashedPassword = SHA256(formData.password).toString(enc.Hex);
         const user = {
             firstName: formData.firstName,
             lastName: formData.lastName,
             email: formData.email,
             password: formData.password
         };
+
         createUserAPIMethod(user)
             .then((response) => {
                 if (response.ok) {
@@ -65,148 +75,167 @@ const Register = () => {
                             if (res.ok) {
                                 res.json().then((jsonResult) => {
                                     dispatch(login(jsonResult));
-                                    navigate(`/form/${jsonResult.user._id}`)
+                                    navigate(`/form/${jsonResult.user._id}`);
                                 });
                             }
                         })
-                        .catch((err) => {
-                            console.error("Error during login:", err);
-                        })
-                        .finally(() => {
-                            setRegisterIsLoading(false);
-                        });
+                        .catch(() => setErrorMessage("Account created. Please sign in."))
+                        .finally(() => setRegisterIsLoading(false));
                 } else {
-                    console.log("Invalid register");
                     setFailed(true);
+                    setRegisterIsLoading(false);
                 }
             })
-            .catch((err) => {
-                console.error("Error registering user:", err);
-            })
-            .finally(() => {
+            .catch(() => {
+                setErrorMessage("Registration failed. Please try again.");
                 setRegisterIsLoading(false);
             });
     };
 
-    const signIn = () => {
-        navigate("/login");
-    }
-
     return (
-        <div className="registration-form-container">
+        <div className="register_page">
             <Navbar />
-            <div className="registration-form-sub-container">
-                <h1>Create an account</h1>
-                <form className="registration-form" onSubmit={handleSubmit}>
-                    <div>
-                        <div>
-                            <label htmlFor="firstName">First Name</label>
-                            <TextField
-                                type="firstName"
-                                // variant="standard"
-                                onChange={handleChange}
-                                name="firstName"
-                                value={formData.firstName}
-                                required
-                                fullWidth
-                                autoComplete="off"
-                            />
-                        </div>
-
-                        <div>
-                            <label htmlFor="lastName">Last Name</label>
-                            <TextField
-                                id="lastName"
-                                type="text"
-                                // variant="standard"
-                                onChange={handleChange}
-                                name="lastName"
-                                value={formData.lastName}
-                                required
-                                fullWidth
-                                autoComplete="off"
-                            />
-                        </div>
-
-                        <div>
-                            <label htmlFor="email">Email:</label>
-                            <TextField
-                                id="email"
-                                type="email"
-                                // variant="standard"
-                                onChange={handleChange}
-                                name="email"
-                                value={formData.email}
-                                required
-                                fullWidth
-                                autoComplete="off"
-                            />
-                        </div>
+            <div className="register_layout">
+                {/* Left panel */}
+                <div className="register_panel_left">
+                    <div className="register_panel_brand">
+                        <img src={logo2} className="register_panel_logo" alt="VITAL" />
+                        <div className="register_panel_brand_name">vital<span>.</span></div>
+                        <p className="register_panel_tagline">
+                            Join thousands discovering the right supplements for their unique health profile.
+                        </p>
                     </div>
-                    <div>
-                        <div>
-                            <label htmlFor="password">Password</label>
-                            <TextField
-                                id="password"
-                                type="password"
-                                // variant="standard"
-                                onChange={handleChange}
-                                name="password"
-                                value={formData.password}
-                                required
-                                fullWidth
-                                autoComplete="off"
-                            />
+                    <div className="register_panel_steps">
+                        {steps.map((s) => (
+                            <div className="register_step" key={s.num}>
+                                <div className="register_step_number">{s.num}</div>
+                                <span className="register_step_text">{s.text}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Right form panel */}
+                <div className="register_panel_right">
+                    <div className="register_form_card">
+                        <div className="register_form_header">
+                            <h1>Create account</h1>
+                            <p>Free forever. Start your health assessment today.</p>
                         </div>
 
-                        <div>
-                            <label htmlFor="confirmPwd">Confirm Password</label>
-                            <TextField
-                                id="confirmPwd"
-                                type="password"
-                                // variant="standard"
-                                onChange={handleChange}
-                                name="confirmPwd"
-                                value={formData.confirmPwd}
-                                required
-                                fullWidth
-                                autoComplete="off"
-                            />
-                        </div>
-                    </div>
-                    {errorMessage && (
-                        <div className="pwd_err ui negative mini message">
-                            {errorMessage}
-                        </div>
-                    )}
-                    <div>
-                        <div className="buttons">
+                        <form className="register_form" onSubmit={handleSubmit}>
+                            <div className="register_row">
+                                <div className="form_field">
+                                    <label className="form_label" htmlFor="firstName">First Name</label>
+                                    <TextField
+                                        id="firstName"
+                                        type="text"
+                                        name="firstName"
+                                        value={formData.firstName}
+                                        onChange={handleChange}
+                                        required
+                                        fullWidth
+                                        autoComplete="given-name"
+                                        size="small"
+                                        placeholder="Jane"
+                                        sx={fieldStyle}
+                                    />
+                                </div>
+                                <div className="form_field">
+                                    <label className="form_label" htmlFor="lastName">Last Name</label>
+                                    <TextField
+                                        id="lastName"
+                                        type="text"
+                                        name="lastName"
+                                        value={formData.lastName}
+                                        onChange={handleChange}
+                                        required
+                                        fullWidth
+                                        autoComplete="family-name"
+                                        size="small"
+                                        placeholder="Doe"
+                                        sx={fieldStyle}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form_field">
+                                <label className="form_label" htmlFor="reg_email">Email address</label>
+                                <TextField
+                                    id="reg_email"
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    required
+                                    fullWidth
+                                    autoComplete="email"
+                                    size="small"
+                                    placeholder="you@example.com"
+                                    sx={fieldStyle}
+                                />
+                            </div>
+
+                            <div className="form_field">
+                                <label className="form_label" htmlFor="reg_password">Password</label>
+                                <TextField
+                                    id="reg_password"
+                                    type="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
+                                    fullWidth
+                                    autoComplete="new-password"
+                                    size="small"
+                                    placeholder="Min. 6 characters"
+                                    sx={fieldStyle}
+                                />
+                            </div>
+
+                            <div className="form_field">
+                                <label className="form_label" htmlFor="confirmPwd">Confirm Password</label>
+                                <TextField
+                                    id="confirmPwd"
+                                    type="password"
+                                    name="confirmPwd"
+                                    value={formData.confirmPwd}
+                                    onChange={handleChange}
+                                    required
+                                    fullWidth
+                                    autoComplete="new-password"
+                                    size="small"
+                                    placeholder="Repeat your password"
+                                    sx={fieldStyle}
+                                />
+                            </div>
+
+                            {(errorMessage || failed) && (
+                                <div className="register_error">
+                                    {errorMessage || "Registration failed. Please check your information and make sure this email is not already registered."}
+                                </div>
+                            )}
+
                             {registerLoading ? (
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        justifyContent: "space-around",
-                                    }}
-                                >
-                                    <Lottie animationData={landingData1} style={style} />
+                                <div className="register_loading_wrap">
+                                    <Lottie animationData={landingData1} style={lottieStyle} />
                                 </div>
                             ) : (
-                                <Button type="submit" variant="contained" style={{ backgroundColor: "#ff395c", height: "40px" }}>Register</Button>
+                                <button type="submit" className="register_submit_btn">
+                                    Create Free Account
+                                </button>
                             )}
-                            <div className="register_have_account" onClick={() => navigate('/login')}><p>Already have an account?</p></div>
-                            {/* <Button variant="outlined" onClick={signIn} style={{ color: "black", borderColor: "black" }}>Sign In</Button> */}
-                        </div>
+
+                            <p className="register_login_prompt">
+                                Already have an account?{' '}
+                                <span onClick={() => navigate('/login')}>Sign in</span>
+                            </p>
+                        </form>
                     </div>
-                    {failed && (
-                        <p className="ui negative mini message">
-                            Registration failed. Please check your information and make sure
-                            that the account has not been created.
-                        </p>
-                    )}
-                </form>
+                </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default Register
+export default Register;

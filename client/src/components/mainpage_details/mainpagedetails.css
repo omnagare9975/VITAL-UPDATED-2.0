@@ -1,46 +1,258 @@
-.mainpage_details_container {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    width: 90%;
-}
-
 .mainpage_details {
-    margin-top: 80px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+  min-height: 100vh;
+  background: var(--bg-page);
+  display: flex;
+  flex-direction: column;
 }
 
-.mainpage_details_object {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    border: solid 2px black;
-    padding: 3rem;
-    border-radius: 10px;
-    height: 160px;
+.details_hero {
+  background: linear-gradient(135deg, #0F2027 0%, #203A43 60%, #2C5364 100%);
+  padding: 2.5rem 1.5rem;
+  position: relative;
+  overflow: hidden;
 }
 
-.mainpage_details_inner {
-    font-weight: 600;
-    margin-bottom: 25px;
+.details_hero::after {
+  content: '';
+  position: absolute;
+  width: 350px;
+  height: 350px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%);
+  top: -100px;
+  right: -60px;
+  pointer-events: none;
 }
 
-.mainpage_details_object_bottom h3 {
-    margin: 10px 0 0 0;
-    font-weight: 600;
+.details_hero_inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.mainpage_details_object_bottom p {
-    margin: 0;
-    color: gray;
+.details_hero_title {
+  font-family: var(--font-display);
+  font-size: clamp(1.375rem, 2.5vw, 1.875rem);
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.02em;
 }
 
-.mainpage_details_top {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.details_back_btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.details_back_btn:hover {
+  background: rgba(255,255,255,0.18);
+}
+
+.details_body {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1.5rem 4rem;
+  width: 100%;
+}
+
+.details_section_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.details_section_title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.details_count_badge {
+  background: var(--primary-muted);
+  color: var(--primary-dark);
+  border-radius: 999px;
+  padding: 0.25rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.details_container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.details_card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.details_card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+  border-color: var(--primary);
+}
+
+.details_card_pdf {
+  background: var(--bg-muted);
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+}
+
+.details_card_bottom {
+  padding: 1.125rem 1.25rem;
+}
+
+.details_card_bottom h3 {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.details_card_bottom p {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+/* ── India saved cards ─────────────────────────────────────────────────────── */
+.india_details_card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.25s;
+  display: flex;
+  flex-direction: column;
+}
+
+.india_details_card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+  border-color: var(--primary);
+}
+
+.india_details_header {
+  background: linear-gradient(135deg, #F0FDF4, #ECFDF5);
+  padding: 1.125rem 1.25rem;
+  border-bottom: 1px solid rgba(16,185,129,0.15);
+}
+
+.india_details_header h3 {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.india_details_brand {
+  font-size: 0.8125rem;
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+.india_details_body {
+  padding: 1rem 1.25rem;
+  flex: 1;
+}
+
+.india_details_desc {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 0.875rem;
+}
+
+.india_details_row {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin-bottom: 0.375rem;
+}
+
+.india_details_row strong {
+  color: var(--text-secondary);
+}
+
+.india_details_footer {
+  padding: 0.875rem 1.25rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.india_details_price {
+  font-weight: 800;
+  color: var(--primary-dark);
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+}
+
+/* Empty state */
+.details_empty {
+  background: var(--bg-card);
+  border: 2px dashed var(--border);
+  border-radius: var(--border-radius-lg);
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.details_empty h3 {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.details_empty p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* Loading */
+.details_loading {
+  padding: 3rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+}
+
+@media (max-width: 600px) {
+  .details_container {
+    grid-template-columns: 1fr;
+  }
 }

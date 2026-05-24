@@ -3,7 +3,7 @@ const Question = require("../models/Question");
 // Get all questions
 const getAllQuestions = async (req, res) => {
   try {
-    const questions = await SocialPost.find();
+    const questions = await Question.find().sort({ createdAt: -1 });
     res.status(200).json(questions);
   } catch (err) {
     res.status(404).json({ message: err.message });
@@ -25,7 +25,7 @@ const getMyQuestion = async (req, res) => {
 const getMyQuestions = async (req, res) => {
   try {
     const { userId } = req.params;
-    const questions = await Question.find({ user_id: userId });
+    const questions = await Question.find({ user_id: userId }).sort({ createdAt: -1 });
     res.status(200).json(questions);
   } catch (err) {
     res.status(404).json({ message: err.message });
@@ -35,13 +35,15 @@ const getMyQuestions = async (req, res) => {
 // Create a Question
 const createQuestion = async (req, res) => {
   try {
-    const { gender, age, allergies, description, user_id } = req.body;
+    const { gender, age, allergies, description, country, healthGoals, user_id } = req.body;
 
     const newQuestion = new Question({
       gender,
       age,
       allergies,
       description,
+      country: country || "USA",
+      healthGoals: healthGoals || [],
       user_id
     });
 
@@ -53,7 +55,7 @@ const createQuestion = async (req, res) => {
   }
 };
 
-// UPDDATE A QUESTION
+// UPDATE A QUESTION
 const updateQuestion = async (req, res) => {
   try {
     const { questionId } = req.params;
@@ -61,13 +63,16 @@ const updateQuestion = async (req, res) => {
 
     const updatedQuestion = await Question.findByIdAndUpdate(
       questionId,
-      {
-        rec_list: rec_list,
-      }
+      { $set: { rec_list: rec_list } },
+      { new: true }          // return the updated document
     );
+
+    if (!updatedQuestion) {
+      return res.status(404).json({ message: "Question not found" });
+    }
     res.status(200).json(updatedQuestion);
   } catch (err) {
-    res.status(404).json({ message: err.message });
+    res.status(500).json({ message: err.message });
   }
 };
 

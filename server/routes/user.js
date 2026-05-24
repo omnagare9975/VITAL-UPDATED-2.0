@@ -1,16 +1,21 @@
 const express = require("express");
 const users = require("../controllers/user.js");
-const auth = require("../middleware/auth.js");
 
 const router = express.Router();
 
-// GET A CURRENT LOGGED IN USER
-router.get("/:id", auth.verifyToken, users.getCurrentUser);
+// GET user by ID
+router.get("/getUser/:id", users.getUserById);
 
-// GET All UserInfo
+// GET all users
 router.get("", users.getAllUsers);
 
-// GET UserInfo by Id
-router.get("/getUser/:id", users.getUserById);
+// UPDATE profile
+router.put("/updateProfile/:id", users.updateProfile);
+
+// CHANGE password
+router.put("/changePassword/:id", users.changePassword);
+
+// ADMIN stats
+router.get("/admin/stats", users.getAdminStats);
 
 module.exports = router;

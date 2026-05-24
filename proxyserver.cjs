@@ -1,12 +1,15 @@
 // pdf-proxy.js
+require('dotenv').config();
 const express = require('express');
 const fetch = require('node-fetch');
 const cors = require('cors');
 
 const app = express();
-const PORT = 3003;
+const PORT = process.env.PORT || 3003;
 
-app.use(cors()); // allow http://localhost:3000 etc.
+app.use(cors());
+
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 app.get('/proxy/pdf/:id', async (req, res) => {
   const { id } = req.params;
@@ -20,11 +23,8 @@ app.get('/proxy/pdf/:id', async (req, res) => {
       return res.status(404).send('PDF not found');
     }
 
-    res.setHeader(
-      'Content-Type',
-      response.headers.get('content-type') || 'application/pdf'
-    );
-
+    res.setHeader('Content-Type', response.headers.get('content-type') || 'application/pdf');
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // cache 24 hrs
     response.body.pipe(res);
   } catch (error) {
     console.error('Error fetching PDF:', error);
@@ -32,6 +32,4 @@ app.get('/proxy/pdf/:id', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 PDF proxy running at http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`PDF proxy running on port ${PORT}`));

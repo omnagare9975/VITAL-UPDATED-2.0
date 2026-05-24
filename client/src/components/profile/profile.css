@@ -1,0 +1,181 @@
+.profile_page {
+  min-height: 100vh;
+  background: var(--bg-page);
+  display: flex;
+  flex-direction: column;
+}
+
+.profile_hero {
+  background: linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%);
+  padding: 2.5rem 1.5rem 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile_hero::after {
+  content: '';
+  position: absolute;
+  width: 350px; height: 350px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%);
+  top: -80px; right: -60px;
+  pointer-events: none;
+}
+
+.profile_hero_inner {
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.profile_back_btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: all 0.2s;
+  margin-bottom: 1.5rem;
+}
+.profile_back_btn:hover { background: rgba(255,255,255,0.18); }
+
+.profile_hero_content {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.profile_big_avatar {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 800;
+  box-shadow: 0 4px 16px rgba(16,185,129,0.4);
+  flex-shrink: 0;
+}
+
+.profile_hero_name {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 0.25rem;
+}
+
+.profile_hero_email {
+  color: rgba(255,255,255,0.6);
+  font-size: 0.9375rem;
+}
+
+.profile_body {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1.5rem 4rem;
+  width: 100%;
+}
+
+.profile_tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0;
+}
+
+.profile_tab {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: all 0.2s;
+}
+
+.profile_tab:hover { color: var(--primary); }
+.profile_tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.profile_card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius-xl);
+  padding: 2rem;
+  box-shadow: var(--shadow-md);
+}
+
+.profile_section_title {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+}
+
+.profile_form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.profile_row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.profile_save_btn {
+  width: fit-content;
+  padding: 0.875rem 2.5rem;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  border: none;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: all 0.2s;
+  box-shadow: 0 4px 15px rgba(16,185,129,0.3);
+  margin-top: 0.5rem;
+}
+.profile_save_btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16,185,129,0.4); }
+.profile_save_btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+.profile_msg {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.profile_msg.success { background: var(--primary-muted); color: var(--primary-dark); border: 1px solid rgba(16,185,129,0.2); }
+.profile_msg.error { background: var(--error-light); color: var(--error); border: 1px solid #FECACA; }
+
+@media (max-width: 600px) {
+  .profile_row { grid-template-columns: 1fr; }
+}

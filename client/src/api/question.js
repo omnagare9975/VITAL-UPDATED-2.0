@@ -1,60 +1,42 @@
+import { API_BASE } from "./config";
+
 const defaultHeaders = {
-  headers: {
-    "Content-Type": "application/json; charset=UTF-8",
-  },
+  headers: { "Content-Type": "application/json; charset=UTF-8" },
 };
 
-// GET ALL QUESTIONS BY USERID
-export const getMyQuestionsAPIMethod = (currentUserId) => {
-  const res = fetch(
-    `http://localhost:3001/api/questions/myQuestions/${currentUserId}`,
-    {
-      ...defaultHeaders,
-      method: "GET",
-    }
-  );
-  return res;
-};
+export const getMyQuestionsAPIMethod = (currentUserId) =>
+  fetch(`${API_BASE}/api/questions/myQuestions/${currentUserId}`, {
+    ...defaultHeaders, method: "GET",
+  });
 
-// CREATING A QUESTION
-export const createQuestionAPIMethod = (question) => {
-  const response = fetch("http://localhost:3001/api/questions/createQuestion", {
+export const createQuestionAPIMethod = (question) =>
+  fetch(`${API_BASE}/api/questions/createQuestion`, {
     ...defaultHeaders,
     method: "POST",
     body: JSON.stringify(question),
   });
-  return response;
+
+export const getRecommendationAPIMethod = (age, description, country = "USA") => {
+  const encodedDesc = encodeURIComponent(description);
+  const endpoint = country === "India"
+    ? `${API_BASE}/run-india/${age}/${encodedDesc}`
+    : `${API_BASE}/run-python/${age}/${encodedDesc}`;
+  return fetch(endpoint, { ...defaultHeaders, method: "GET" });
 };
 
-// GETTING RECOMMENDATION
-export const getRecommendationAPIMethod = (age, description) => {
-  console.log(age, description);
-  const response = fetch(`http://localhost:3001/run-python/${age}/${description}`, {
+export const updateQuestionAPIMethod = (questionId, body) =>
+  fetch(`${API_BASE}/api/questions/updateQuestion/${questionId}`, {
     ...defaultHeaders,
-    method: "GET",
+    method: "PUT",
+    body: JSON.stringify(body),
   });
-  return response;
-};
 
-// UPDATE A QUESTION
-export const updateQuestionAPIMethod = (questionId, rec_list) => {
-  return fetch(
-    `http://localhost:3001/api/questions/updateQuestion/${questionId}`,
-    {
-      ...defaultHeaders,
-      method: "PUT", // The method defaults to GET
-      body: JSON.stringify(rec_list),
-    }
-  );
-};
+export const getQuestionById = (id) =>
+  fetch(`${API_BASE}/api/questions/myQuestion/${id}`, {
+    ...defaultHeaders, method: "GET",
+  });
 
-export const getQuestionById = (id) => {
-  const res = fetch(
-    `http://localhost:3001/api/questions/myQuestion/${id}`,
-    {
-      ...defaultHeaders,
-      method: "GET",
-    }
-  );
-  return res;
-};
+export const deleteQuestionAPIMethod = (id) =>
+  fetch(`${API_BASE}/api/questions/deleteQuestion/${id}`, {
+    ...defaultHeaders, method: "DELETE",
+  });

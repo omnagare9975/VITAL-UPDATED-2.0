@@ -5,19 +5,32 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const { execFile } = require("child_process");
+const path = require("path");
 const Groq = require("groq-sdk");
 
 const app = express();
 const port = process.env.PORT || 3001;
 
-// ── Groq client ───────────────────────────────────────────────────────────────
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// ── Middleware ────────────────────────────────────────────────────────────────
-app.use(cors());
-app.use(express.json());
+// CORS — allow localhost in dev and production frontend URL in prod
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  process.env.CLIENT_URL,        // set this on Render to your Vercel URL
+].filter(Boolean);
 
-// ── Routes ────────────────────────────────────────────────────────────────────
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    // In production allow any Vercel/Netlify preview URL
+    if (origin.endsWith(".vercel.app") || origin.endsWith(".netlify.app")) return cb(null, true);
+    cb(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+}));
+app.use(express.json({ limit: "10mb" }));
+
 const authRoutes     = require("./routes/auth");
 const userRoutes     = require("./routes/user");
 const questionRoutes = require("./routes/question");
@@ -26,10 +39,25 @@ app.use("/api/auth",      authRoutes);
 app.use("/api/users",     userRoutes);
 app.use("/api/questions", questionRoutes);
 
-// ── Helper: Normalize any user input into medical terminology via Groq ─────────
+// ── Helper: promisified execFile ───────────────────────────────────────────────
+function runPython(args, options = {}) {
+  return new Promise((resolve, reject) => {
+    execFile(
+      "python",
+      args,
+      { cwd: path.join(__dirname), maxBuffer: 1024 * 1024 * 5, ...options },
+      (error, stdout, stderr) => {
+        if (error) return reject({ error, stderr });
+        resolve(stdout);
+      }
+    );
+  });
+}
+
+// ── Helper: Normalize user input into medical terms via Groq (fallback only) ──
 async function normalizeHealthInput(description, rawAllergies = "none") {
   const response = await groq.chat.completions.create({
-    model: "llama3-70b-8192",
+    model: "llama-3.3-70b-versatile",
     max_tokens: 400,
     temperature: 0.2,
     messages: [
@@ -71,9 +99,8 @@ Conversion examples:
 - "eye health"           -> "macular degeneration risk, vision support"
 
 Allergy normalization:
-- Normalize user allergy text to standard food allergen names (fish, peanuts, dairy, wheat, soy, eggs, shellfish, tree nuts, sesame, mustard)
-- If no allergies mentioned, return []
-- If description is gibberish or totally irrelevant, use "general health, immune support"`,
+- Normalize to standard food allergen names (fish, peanuts, dairy, wheat, soy, eggs, shellfish, tree nuts, sesame)
+- If no allergies mentioned, return []`,
       },
     ],
   });
@@ -83,22 +110,26 @@ Allergy normalization:
   return JSON.parse(clean);
 }
 
-// ── Helper: Fallback Groq response when dataset has no match ──────────────────
-async function generateFallbackResponse(originalDescription) {
+// ── Helper: Groq fallback advisory message ────────────────────────────────────
+async function generateFallbackResponse(originalDescription, country = "USA") {
+  const countryContext = country === "India"
+    ? "Focus on well-known Indian Ayurvedic and nutraceutical brands like Himalaya, Dabur, Patanjali, or MuscleBlaze."
+    : "Focus on internationally available supplements.";
+
   const response = await groq.chat.completions.create({
     model: "llama-3.3-70b-versatile",
-    max_tokens: 250,
+    max_tokens: 300,
     temperature: 0.5,
     messages: [
       {
         role: "system",
-        content:
-          "You are a helpful health supplement advisor. Keep responses brief, friendly, and always recommend consulting a healthcare provider.",
+        content: "You are a helpful health supplement advisor. Keep responses brief, friendly, and always recommend consulting a healthcare provider.",
       },
       {
         role: "user",
         content: `A user searched for supplement recommendations with: "${originalDescription}".
-Our database had no exact matches. In 2-3 sentences, mention what types of supplements are generally associated with their need, and suggest they consult a healthcare provider. Do NOT recommend specific brands or exact dosages.`,
+Our database had no exact matches. ${countryContext}
+In 2-3 sentences, mention what types of supplements are generally associated with their need, and suggest they consult a healthcare provider. Do NOT recommend specific dosages.`,
       },
     ],
   });
@@ -106,17 +137,54 @@ Our database had no exact matches. In 2-3 sentences, mention what types of suppl
   return response.choices[0].message.content.trim();
 }
 
-// ── GET /run-python/:age/:description ─────────────────────────────────────────
+// ── Helper: parse Python stdout into a usable result ──────────────────────────
+function parsePythonResult(stdout) {
+  const result = JSON.parse(stdout);
+  // India format: { type:"india", data:[...], count:N }
+  if (result.type === "india") {
+    return result.data && result.data.length > 0 ? result : null;
+  }
+  // USA (pandas split) format: { data:[[...]], columns:[...] }
+  if (result.data && Array.isArray(result.data) && result.data.length > 0) {
+    return result;
+  }
+  return null;
+}
+
+// ── GET /run-python/:age/:description  (USA – NIH DSLD) ──────────────────────
+//
+//  Flow:
+//    1. Search dataset with RAW description
+//    2. If results → return them  (Groq never called)
+//    3. If nothing → normalize with Groq → search again
+//    4. If still nothing → Groq fallback advisory message
+//
 app.get("/run-python/:age/:description", async (req, res) => {
   let { age, description } = req.params;
-
   description = decodeURIComponent(description);
   age = age.charAt(0).toUpperCase() + age.slice(1);
 
-  let medicalDescription  = description;
+  // ── Step 1: Search dataset with raw description ──────────────────────────
+  console.log(`[USA] Step 1 – raw search: "${description}"`);
+  try {
+    const stdout = await runPython(
+      ["check.py", age, "Vega", "False", description, "none"]
+    );
+    const result = parsePythonResult(stdout);
+    if (result) {
+      console.log(`[USA] Raw search hit – returning results`);
+      result._meta = { originalQuery: description, normalizedQuery: description, allergiesDetected: [], country: "USA" };
+      return res.json(result);
+    }
+    console.log(`[USA] Raw search returned empty, trying Groq normalization…`);
+  } catch (rawErr) {
+    console.warn(`[USA] Raw search failed: ${rawErr.stderr || rawErr.error?.message}`);
+  }
+
+  // ── Step 2: Normalize with Groq, then retry dataset ──────────────────────
+  let medicalDescription = description;
   let normalizedAllergies = "none";
 
-  // Step 1: Normalize with Groq
   try {
     const normalized = await normalizeHealthInput(description, "none");
     medicalDescription  = normalized.medicalDescription || description;
@@ -124,129 +192,202 @@ app.get("/run-python/:age/:description", async (req, res) => {
       Array.isArray(normalized.normalizedAllergies) && normalized.normalizedAllergies.length > 0
         ? normalized.normalizedAllergies.join(",")
         : "none";
-
-    console.log(`[Groq] Original:   "${description}"`);
-    console.log(`[Groq] Normalized: "${medicalDescription}"`);
-    console.log(`[Groq] Allergies:  "${normalizedAllergies}"`);
-  } catch (normError) {
-    console.warn("[Groq] Normalization failed, using raw input:", normError.message);
+    console.log(`[USA] Step 2 – normalized: "${medicalDescription}"`);
+  } catch (normErr) {
+    console.warn(`[USA] Groq normalization failed: ${normErr.message}`);
   }
 
-  // Step 2: Run Python NER pipeline
-  execFile(
-    "python",
-    ["check.py", age, "Vega", "False", medicalDescription, normalizedAllergies],
-    { maxBuffer: 1024 * 1024 * 5 },
-    async (error, stdout, stderr) => {
-      if (error) {
-        console.error("[Python] Error:", stderr || error.message);
-
-        // Step 3: Groq fallback if NER / dataset fails
-        try {
-          const fallbackMsg = await generateFallbackResponse(description);
-          return res.status(404).json({
-            error:           "no_match",
-            message:         fallbackMsg,
-            originalQuery:   description,
-            normalizedQuery: medicalDescription,
-          });
-        } catch (fbError) {
-          console.error("[Groq] Fallback also failed:", fbError.message);
-          return res.status(404).json({
-            error:         "no_match",
-            message:       "We couldn't find supplements matching your specific needs. Please consult a healthcare provider for personalized recommendations.",
-            originalQuery: description,
-          });
-        }
-      }
-
-      // Step 4: Parse & return Python result
-      try {
-        const result = JSON.parse(stdout);
-
-        result._meta = {
-          originalQuery:     description,
-          normalizedQuery:   medicalDescription,
-          allergiesDetected: normalizedAllergies !== "none" ? normalizedAllergies.split(",") : [],
-        };
-
-        res.json(result);
-      } catch (parseError) {
-        console.error("[Parse] Error:", parseError.message, "| Output:", stdout.slice(0, 200));
-        try {
-          const fallbackMsg = await generateFallbackResponse(description);
-          return res.status(500).json({
-            error:         "parse_error",
-            message:       fallbackMsg,
-            originalQuery: description,
-          });
-        } catch {
-          return res.status(500).json({ error: "Internal Server Error" });
-        }
-      }
+  try {
+    const stdout = await runPython(
+      ["check.py", age, "Vega", "False", medicalDescription, normalizedAllergies]
+    );
+    const result = parsePythonResult(stdout);
+    if (result) {
+      console.log(`[USA] Normalized search hit – returning results`);
+      result._meta = {
+        originalQuery:     description,
+        normalizedQuery:   medicalDescription,
+        allergiesDetected: normalizedAllergies !== "none" ? normalizedAllergies.split(",") : [],
+        country:           "USA",
+      };
+      return res.json(result);
     }
-  );
+    console.log(`[USA] Normalized search also empty, falling back to Groq advisory`);
+  } catch (normErr) {
+    console.warn(`[USA] Normalized search failed: ${normErr.stderr || normErr.error?.message}`);
+  }
+
+  // ── Step 3: Groq advisory fallback ────────────────────────────────────────
+  try {
+    const fallbackMsg = await generateFallbackResponse(description, "USA");
+    return res.status(404).json({
+      error: "no_match", message: fallbackMsg,
+      originalQuery: description, normalizedQuery: medicalDescription,
+    });
+  } catch {
+    return res.status(404).json({
+      error: "no_match",
+      message: "We couldn't find supplements matching your needs. Please consult a healthcare provider.",
+      originalQuery: description,
+    });
+  }
 });
 
-// ── POST /run-python-advanced (allergies passed explicitly in body) ───────────
+// ── GET /run-india/:age/:description  (India supplement database) ─────────────
+//
+//  Flow:
+//    1. Search India dataset with RAW description
+//    2. If results → return them  (Groq never called)
+//    3. If nothing → normalize with Groq → search again
+//    4. If still nothing → Groq fallback advisory message
+//
+app.get("/run-india/:age/:description", async (req, res) => {
+  let { age, description } = req.params;
+  description = decodeURIComponent(description);
+  age = age.charAt(0).toUpperCase() + age.slice(1);
+
+  // ── Step 1: Search India dataset with raw description ────────────────────
+  console.log(`[India] Step 1 – raw search: "${description}"`);
+  try {
+    const stdout = await runPython(
+      ["india_check.py", age, description, "none"],
+      { maxBuffer: 1024 * 1024 * 2 }
+    );
+    const result = parsePythonResult(stdout);
+    if (result) {
+      console.log(`[India] Raw search hit – returning ${result.data.length} results`);
+      result._meta = { originalQuery: description, normalizedQuery: description, allergiesDetected: [], country: "India" };
+      return res.json(result);
+    }
+    console.log(`[India] Raw search returned empty, trying Groq normalization…`);
+  } catch (rawErr) {
+    console.warn(`[India] Raw search failed: ${rawErr.stderr || rawErr.error?.message}`);
+  }
+
+  // ── Step 2: Normalize with Groq, then retry India dataset ────────────────
+  let medicalDescription = description;
+  let normalizedAllergies = "none";
+
+  try {
+    const normalized = await normalizeHealthInput(description, "none");
+    medicalDescription  = normalized.medicalDescription || description;
+    normalizedAllergies =
+      Array.isArray(normalized.normalizedAllergies) && normalized.normalizedAllergies.length > 0
+        ? normalized.normalizedAllergies.join(",")
+        : "none";
+    console.log(`[India] Step 2 – normalized: "${medicalDescription}"`);
+  } catch (normErr) {
+    console.warn(`[India] Groq normalization failed: ${normErr.message}`);
+  }
+
+  try {
+    const stdout = await runPython(
+      ["india_check.py", age, medicalDescription, normalizedAllergies],
+      { maxBuffer: 1024 * 1024 * 2 }
+    );
+    const result = parsePythonResult(stdout);
+    if (result) {
+      console.log(`[India] Normalized search hit – returning ${result.data.length} results`);
+      result._meta = {
+        originalQuery:     description,
+        normalizedQuery:   medicalDescription,
+        allergiesDetected: normalizedAllergies !== "none" ? normalizedAllergies.split(",") : [],
+        country:           "India",
+      };
+      return res.json(result);
+    }
+    console.log(`[India] Normalized search also empty, falling back to Groq advisory`);
+  } catch (normSearchErr) {
+    console.warn(`[India] Normalized search failed: ${normSearchErr.stderr || normSearchErr.error?.message}`);
+  }
+
+  // ── Step 3: Groq advisory fallback ────────────────────────────────────────
+  try {
+    const fallbackMsg = await generateFallbackResponse(description, "India");
+    return res.status(404).json({
+      error: "no_match", message: fallbackMsg,
+      originalQuery: description, normalizedQuery: medicalDescription,
+      country: "India",
+    });
+  } catch {
+    return res.status(404).json({
+      error: "no_match",
+      message: "No Indian supplements found for your query. Please consult a healthcare provider.",
+      country: "India",
+    });
+  }
+});
+
+// ── POST /run-python-advanced  (explicit allergies in body, country-aware) ────
+//
+//  Same dataset-first logic, allergies passed explicitly.
+//
 app.post("/run-python-advanced", async (req, res) => {
-  let { age = "Adult", description = "", allergies = "" } = req.body;
+  let { age = "Adult", description = "", allergies = "", country = "USA" } = req.body;
 
   if (!description.trim()) {
     return res.status(400).json({ error: "Description is required." });
   }
 
   age = age.charAt(0).toUpperCase() + age.slice(1);
+  const isIndia = country === "India";
+  const scriptBase = isIndia ? "india_check.py" : "check.py";
 
-  let medicalDescription  = description;
-  let normalizedAllergies = "none";
+  const rawArgs = isIndia
+    ? [scriptBase, age, description, allergies || "none"]
+    : [scriptBase, age, "Vega", "False", description, allergies || "none"];
+
+  // Step 1: raw search
+  try {
+    const stdout = await runPython(rawArgs);
+    const result = parsePythonResult(stdout);
+    if (result) {
+      result._meta = { originalQuery: description, normalizedQuery: description, allergiesDetected: [], country };
+      return res.json(result);
+    }
+  } catch (_) { /* fall through to normalization */ }
+
+  // Step 2: normalize and retry
+  let medicalDescription = description;
+  let normalizedAllergies = allergies || "none";
 
   try {
     const normalized = await normalizeHealthInput(description, allergies);
     medicalDescription = normalized.medicalDescription || description;
 
-    // Merge Groq-detected + manually provided allergies
     const groqAllergies   = normalized.normalizedAllergies || [];
     const manualAllergies = allergies
-      ? allergies.split(",").map((a) => a.trim().toLowerCase()).filter(Boolean)
+      ? allergies.split(",").map(a => a.trim().toLowerCase()).filter(Boolean)
       : [];
-    const allAllergies = [...new Set([...groqAllergies, ...manualAllergies])];
-    normalizedAllergies = allAllergies.length > 0 ? allAllergies.join(",") : "none";
+    const merged = [...new Set([...groqAllergies, ...manualAllergies])];
+    normalizedAllergies = merged.length > 0 ? merged.join(",") : "none";
+  } catch (_) { /* keep raw values */ }
 
-    console.log(`[Groq Advanced] Normalized: "${medicalDescription}"`);
-    console.log(`[Groq Advanced] Allergies:  "${normalizedAllergies}"`);
-  } catch (err) {
-    console.warn("[Groq Advanced] Normalization failed:", err.message);
-  }
+  const normArgs = isIndia
+    ? [scriptBase, age, medicalDescription, normalizedAllergies]
+    : [scriptBase, age, "Vega", "False", medicalDescription, normalizedAllergies];
 
-  execFile(
-    "python",
-    ["check.py", age, "Vega", "False", medicalDescription, normalizedAllergies],
-    { maxBuffer: 1024 * 1024 * 5 },
-    async (error, stdout, stderr) => {
-      if (error) {
-        console.error("[Python Advanced] Error:", stderr || error.message);
-        try {
-          const fallbackMsg = await generateFallbackResponse(description);
-          return res.status(404).json({ error: "no_match", message: fallbackMsg });
-        } catch {
-          return res.status(404).json({ error: "no_match", message: "No supplements found." });
-        }
-      }
-
-      try {
-        const result = JSON.parse(stdout);
-        result._meta = {
-          originalQuery:     description,
-          normalizedQuery:   medicalDescription,
-          allergiesDetected: normalizedAllergies !== "none" ? normalizedAllergies.split(",") : [],
-        };
-        res.json(result);
-      } catch {
-        return res.status(500).json({ error: "Internal Server Error" });
-      }
+  try {
+    const stdout = await runPython(normArgs);
+    const result = parsePythonResult(stdout);
+    if (result) {
+      result._meta = {
+        originalQuery: description,
+        normalizedQuery: medicalDescription,
+        allergiesDetected: normalizedAllergies !== "none" ? normalizedAllergies.split(",") : [],
+        country,
+      };
+      return res.json(result);
     }
-  );
+  } catch (_) { /* fall through to Groq fallback */ }
+
+  // Step 3: Groq fallback
+  try {
+    const fallbackMsg = await generateFallbackResponse(description, country);
+    return res.status(404).json({ error: "no_match", message: fallbackMsg, country });
+  } catch {
+    return res.status(404).json({ error: "no_match", message: "No supplements found.", country });
+  }
 });
 
 // ── Health check ──────────────────────────────────────────────────────────────
@@ -260,7 +401,6 @@ mongoose
   .then(() => console.log("DB IS CONNECTED !!"))
   .catch((error) => console.log(`DB Failed To Connect: ${error}`));
 
-// ── Start server ──────────────────────────────────────────────────────────────
 app.listen(port, () => console.log(`SERVER IS RUNNING ON PORT ${port}`));
 
 module.exports = app;

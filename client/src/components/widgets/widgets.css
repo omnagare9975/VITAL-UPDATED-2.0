@@ -1,15 +1,21 @@
 .btn_container {
-    background-color: rgba(207, 207, 207, 0.585);
-    padding: 0.5rem 1rem 0.5rem 1rem;
-    border-radius: 0.3rem;
+    background: transparent;
+    border: 1.5px solid var(--border, #E5E7EB);
+    padding: 0.5rem 1.125rem;
+    border-radius: 999px;
     cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-family: Poppins;
-    font-weight: 700;
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text-secondary, #374151);
+    transition: all 0.2s ease;
 }
 
 .btn_container:hover {
-    background-color: rgba(140, 145, 150, 0.873);
+    border-color: var(--primary, #10B981);
+    color: var(--primary, #10B981);
+    background: var(--primary-muted, #ECFDF5);
 }

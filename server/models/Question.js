@@ -19,6 +19,15 @@ const QuestionSchema = new mongoose.Schema({
     type: String,
     max: 1000
   },
+  country: {
+    type: String,
+    default: "USA",
+    max: 50
+  },
+  healthGoals: {
+    type: [String],
+    default: []
+  },
   user_id: {
     type: String,
     required: true,
@@ -26,7 +35,12 @@ const QuestionSchema = new mongoose.Schema({
   rec_list: {
     type: Array,
     default: [],
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
 });
+
 const Question = mongoose.model("Question", QuestionSchema);
 module.exports = Question;

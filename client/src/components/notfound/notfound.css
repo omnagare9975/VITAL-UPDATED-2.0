@@ -1,0 +1,16 @@
+.notfound_page { min-height: 100vh; background: var(--bg-page); display: flex; flex-direction: column; }
+.notfound_body {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 4rem 1.5rem; text-align: center; gap: 1rem;
+}
+.notfound_code {
+  font-family: var(--font-display); font-size: 8rem; font-weight: 900;
+  background: linear-gradient(135deg, var(--primary), #34D399);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; line-height: 1;
+}
+.notfound_emoji { font-size: 3rem; }
+.notfound_title { font-family: var(--font-display); font-size: 2rem; font-weight: 800; color: var(--text-primary); }
+.notfound_sub { font-size: 1rem; color: var(--text-muted); max-width: 400px; line-height: 1.6; }
+.notfound_actions { display: flex; gap: 0.875rem; flex-wrap: wrap; justify-content: center; margin-top: 0.5rem; }

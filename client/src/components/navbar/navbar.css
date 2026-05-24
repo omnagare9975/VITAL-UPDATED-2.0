@@ -1,181 +1,143 @@
-.navbar {
-    font-family: "Nunito Sans", sans-serif;
-    font-optical-sizing: auto;
-    font-weight: 600;
-    font-style: normal;
-    font-variation-settings:
-        "wdth" 100,
-        "YTLC" 500;
-
-}
-
 .navbar_container {
-    /* padding: 15px 15px; */
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    font-size: large;
-    font-family: "Noto Sans", sans-serif;
-    font-optical-sizing: auto;
-    font-weight: 500;
-    font-style: normal;
-    font-variation-settings:
-        "wdth" 100;
-    position: absolute;
-    z-index: 1;
-    width: 100%;
-    top: 0;
-    color: white;
-    padding-top: 10px;
-}
-
-.dark {
-    color: black;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
 .navbar_inner {
-    display: flex;
-    width: 100%;
-    justify-content: space-between;
-    padding: 1rem 2.5rem;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .navbar_logo_container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 0.5rem;
-    font-family: "Montserrat", sans-serif;
-    font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-transform: lowercase;
+  letter-spacing: -0.02em;
+}
+
+.navbar_logo_container:hover {
+  color: var(--primary);
 }
 
 .main_logo {
-    width: 3rem;
-    height: 3rem;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+/* Branding dot */
+.navbar_logo_container::after {
+  content: '.';
+  color: var(--primary);
+  font-size: 1.75rem;
+  line-height: 0;
+  position: relative;
+  top: 4px;
 }
 
 .navbar_links {
-    display: flex;
-    gap: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.link {
-    font-size: large;
-    font-weight: 300;
-    background-color: rgba(75, 86, 96, 0.585);
-    padding: 0.5rem 1rem 0.5rem 1rem;
-    border-radius: 0.5rem;
-}
-
-.landing_container {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-}
-
-.landing_maintext {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.landing_maintext h1 {
-    background: linear-gradient(45deg, #a7caed, #aca7ed, #f2e3eb);
-    -webkit-background-clip: text;
-    color: transparent;
-    font-size: 3.5rem;
-    font-weight: bold;
-    margin: 2rem 0 1rem 0;
-    padding: 0;
-    text-align: center;
-    line-height: 1.2;
-}
-
-.landing_maintext div {
-    font-size: 1.2rem;
-    font-weight: 500;
-    margin-bottom: 1.5rem;
-}
-
-
-.contact_form_wrapper {
-    display: flex;
-    justify-content: center;
-    margin-top: 2rem;
-}
-
+/* Auth user controls */
 .logout_container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
-    border: solid gray 1px;
-    padding: 0 5px 0 5px;
-    height: 40px;
-    border-radius: 50px;
-    cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--border-radius-full);
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
 }
 
 .logout_container:hover {
-    box-shadow: 2px 2px 2px 2px rgba(0, 0, 0, 0.1), 0 0 0 0 rgba(0, 0, 0, 0.05), 0 0 7px 3px rgba(0, 0, 0, 0.03);
-
+  border-color: var(--primary);
+  background: var(--primary-muted);
 }
 
 .logout_modal {
-    position: absolute;
-    top: 73px;
-    right: 50px;
-    background-color: white;
-    box-shadow: 5px;
-    background-color: #fff;
-    width: 150px;
-    display: flex;
-    justify-content: left;
-    font-weight: 400;
-    font-size: 15px;
-    cursor: pointer;
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  min-width: 180px;
+  overflow: hidden;
+  animation: fadeInDown 0.15s ease;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.logout_modal_item {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.logout_modal_item:hover {
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
+
+.logout_modal_item.danger {
+  color: var(--error);
+}
+
+.logout_modal_item.danger:hover {
+  background: var(--error-light);
 }
 
 .logout_btn {
-    width: 100%;
-    z-index: 10;
-    padding: 0 10px 0 10px;
-    border-radius: 5px;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--error);
+  cursor: pointer;
+  transition: background var(--transition);
+  margin: 0;
 }
 
-/* .logout_btn:hover {
-    background-color: rgb(227, 227, 227);
-} */
-
-.logout_modal::before,
-.logout_modal::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.1), 0 0 0 0 rgba(0, 0, 0, 0.05), 0 0 7px 3px rgba(0, 0, 0, 0.03);
-    border-radius: 10px;
+.logout_btn:hover {
+  background: var(--error-light);
 }
 
-@keyframes typewriter {
-    0% {
-        width: 0px;
-    }
-
-    100% {
-        width: 240px;
-    }
-}
-
-@keyframes blink {
-    0% {
-        border-right-color: rgba(255, 255, 255, 0.75);
-    }
-
-    100% {
-        border-right-color: transparent;
-    }
+/* Widget button overrides */
+.nav_link_btn {
+  padding: 0.5rem 1.125rem !important;
+  border-radius: var(--border-radius-full) !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  transition: all var(--transition) !important;
 }
