@@ -1,45 +1,37 @@
 # ── VITAL API Server ──────────────────────────────────────────────────────────
-# Uses Node.js 20 on Debian (needed to install Python alongside Node)
 FROM node:20-bullseye-slim
 
 WORKDIR /app
 
-# ── Install Python 3 (needed for india_check.py and check.py) ─────────────────
+# ── System deps: Python 3 + pip ───────────────────────────────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Create python3 alias
 RUN ln -sf /usr/bin/python3 /usr/bin/python
 
-# ── Python deps for India mode (lightweight — stdlib only, no extra pip) ──────
-# india_check.py uses only Python stdlib (json, re, os, sys, io).
-# No pip install required for India supplements.
+# ── Python packages required by check.py (USA / NIH DSLD mode) ───────────────
+# CPU-only torch keeps the image smaller (~500 MB vs ~2 GB for GPU build)
+RUN pip3 install --no-cache-dir \
+    numpy \
+    pandas \
+    Bio-Epidemiology-NER==0.0.6
 
-# ── Python deps for USA / NIH mode (optional — heavy, ~3 GB with torch) ──────
-# Uncomment the block below ONLY if you have the DSLD CSV files in server/
-# and want USA NIH supplement recommendations:
-#
-# RUN pip3 install --no-cache-dir \
-#     pandas==2.1.4 \
-#     numpy==1.26.2 \
-#     Bio-Epidemiology-NER==0.0.6
-#
-# RUN pip3 install --no-cache-dir \
-#     torch --index-url https://download.pytorch.org/whl/cpu
-#
-# RUN python3 -c "import nltk; nltk.download('punkt_tab')"
+RUN pip3 install --no-cache-dir \
+    torch --index-url https://download.pytorch.org/whl/cpu
 
-# ── Node deps ─────────────────────────────────────────────────────────────────
+# Pre-download NLTK punkt data so the first request doesn't need internet
+RUN python3 -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')"
+
+# ── Node packages ─────────────────────────────────────────────────────────────
 COPY package*.json ./
 RUN npm install --omit=dev
 
-# ── Copy source ───────────────────────────────────────────────────────────────
+# ── App source ────────────────────────────────────────────────────────────────
 COPY . .
 
 EXPOSE 3001
 
-# Use node directly (not nodemon) in production
 CMD ["node", "server.js"]
