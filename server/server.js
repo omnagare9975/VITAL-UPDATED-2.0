@@ -138,13 +138,22 @@ In 2-3 sentences, mention what types of supplements are generally associated wit
 }
 
 // ── Helper: parse Python stdout into a usable result ──────────────────────────
+// Strips any non-JSON prefix (NLTK download messages, "Device set to use cpu", etc.)
+// before parsing — these lines are printed to stdout by transformers/nltk even though
+// they should go to stderr.
 function parsePythonResult(stdout) {
-  const result = JSON.parse(stdout);
+  // Find the first { or [ — real JSON always starts there
+  const jsonStart = stdout.search(/[{[]/);
+  if (jsonStart === -1) return null;
+
+  const jsonStr = stdout.slice(jsonStart).trim();
+  const result  = JSON.parse(jsonStr);
+
   // India format: { type:"india", data:[...], count:N }
   if (result.type === "india") {
     return result.data && result.data.length > 0 ? result : null;
   }
-  // USA (pandas split) format: { data:[[...]], columns:[...] }
+  // USA pandas split format: { columns:[...], data:[[...]] }
   if (result.data && Array.isArray(result.data) && result.data.length > 0) {
     return result;
   }

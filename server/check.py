@@ -2,12 +2,22 @@ import sys
 import json
 import os
 import re
+
+# ── Silence ALL stdout pollution before importing heavy libraries ─────────────
+# NLTK, transformers, and torch all print messages to stdout (not stderr).
+# Node.js captures stdout and tries JSON.parse() on it — any prefix text breaks that.
+# We redirect stdout → stderr during imports, then restore it for the final JSON.
+_real_stdout = sys.stdout
+sys.stdout = sys.stderr
+
 import numpy as np
 import pandas as pd
 from Bio_Epidemiology_NER.bio_recognizer import ner_prediction
 
+# Restore real stdout — only JSON will be written here
+sys.stdout = _real_stdout
+
 # ── CRITICAL: Always run from the script's own directory ──────────────────────
-# This fixes the "Error loading CSV" issue when Node calls this script
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 pd.set_option('display.max_colwidth', 20)
